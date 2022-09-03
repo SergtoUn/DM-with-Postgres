@@ -61,7 +61,7 @@ NB: songplays table allows nullable values to be insert into artist_id and song_
 ## 3. Updating the Project Template  
 In order to warn the client about the exact songs and artists that are unavailable in metadata files additional file "warnings.txt" has been created.  
 Also due to the bug in test.ipynb the output for the test on nullables in {songplay_table} has been altered underlining the original problem, please find the changes in the picture file   
-![Alt text](image6.PNG?raw=true "Bug")
+![Bug](image6.PNG "Bug")
 
 ## 4. Processing the scripts
 In order to create the schema please run in Linux terminal:
