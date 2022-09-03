@@ -59,7 +59,9 @@ user_agent: text.
 NB: songplays table allows nullable values to be insert into artist_id and song_id columns because the logs may (and do) possess the records about the songs and the artists that are not available in the metadata files presented. These records may be beneficial during the analysis. For the 
   
 ## 3. Updating the Project Template  
-In order to warn the client about the exact songs and artists that are unavailable in metadata files additional file "warnings.txt" has been created. 
+In order to warn the client about the exact songs and artists that are unavailable in metadata files additional file "warnings.txt" has been created.  
+Also due to the bug in test.ipynb the output for the test on nullables in {songplay_table} has been altered underlining the original problem, please find the changes in the picture file   
+![Alt text](image6.PNG?raw=true "Bug")
 
 ## 4. Processing the scripts
 In order to create the schema please run in Linux terminal:
@@ -69,4 +71,6 @@ The data is processed and loaded with the following command run from the termina
 `python3 etl.py`
 Alternatively both commands can be run in Linux terminal with
 `./start.sh`
+
+
 
