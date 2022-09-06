@@ -1,11 +1,22 @@
 import os
+import datetime;
 import glob
 import psycopg2
 import pandas as pd
 from sql_queries import *
 
-
+ 
+    
 def process_song_file(cur, filepath):
+    """
+    This procedure processes a song file whose filepath has been provided as an arugment.
+    It extracts the song information in order to store it into the songs table.
+    Then it extracts the artist information in order to store it into the artists table.
+
+    INPUTS: 
+    * cur the cursor variable
+    * filepath the file path to the song file
+    """
     # open song file
     try:
         df = pd.read_json(filepath, lines=True)
@@ -57,8 +68,22 @@ def process_song_file(cur, filepath):
         print (e)
 
     cur.execute("SELECT COUNT(*) FROM artists")
-        
+
+     
+    
 def process_log_file(cur, filepath):
+    """
+    This procedure processes a log file whose filepath has been provided as an arugment.
+    It extracts the log information, filters the records by NextSong action, converts the time data 
+    in order to store it into the time table. 
+    After it the data for the users table is extracted and inserted.
+    As a final step the records to the songlays table are inserted accordingly.
+    File 'warnings.txt' is created as a log file for the case when no corresponding songs and artists are found in the database and the metadata files.
+    
+    INPUTS: 
+    * cur the cursor variable
+    * filepath the file path to the log file
+    """
     # open log file
     try:
         df = pd.read_json(filepath, lines=True)
@@ -123,18 +148,19 @@ def process_log_file(cur, filepath):
     for index, row in df.iterrows():
         
         # get songid and artistid from song and artist tables
-        cur.execute(song_select, (row.song, row.artist, row.length))
-        results = cur.fetchone()
-        
-        if results:
-            songid, artistid = results
-        else:
-            songid, artistid = None, None
-            
-        # insert songplay record
-        songplay_data = [index, row.ts, row.userId, row.level, songid, artistid, row.sessionId, row.location, row.userAgent]
+        try:
+            cur.execute(song_select, (row.song, row.artist, row.length))
+            results = cur.fetchone()
+            if results:
+                songid, artistid = results
+            else:
+                songid, artistid = None, None
+        except psycopg2.Error as e:
+            print(e)
+            print(row.song + " " + row.artist + " " + str(row.length))
         
         try:
+            songplay_data = [row.ts, row.userId, row.level, songid, artistid, row.sessionId, row.location, row.userAgent]
             cur.execute(songplay_table_insert, songplay_data)
             
             
@@ -143,10 +169,14 @@ def process_log_file(cur, filepath):
             print (e)
             
         except:
-            print('Unknown exception found while inserting the songplay records with songplay_table_insert!')
-
+            print('Unknown exception found while inserting the songplay records with songplay_table_insert!')    
+            
+            
+        # insert songplay record
+                
         if songid is None or artistid is None:
-            f.write('Warning: the data is found in logs, but is not available in the metadata files: song "{}", artist "{}"\n'.format(row.song, row.artist))
+            f.write(str(datetime.datetime.now()) + ' ' + 'Warning: the data is found in logs, but is not available in the metadata files: song "{}", artist "{}"\n'.format(row.song, row.artist))
+            
             
         else:
             continue
@@ -154,7 +184,19 @@ def process_log_file(cur, filepath):
     if os.stat('warnings.txt').st_size != 0: print('Please check warnings.txt file for the warnings!') 
         
 
+
 def process_data(cur, conn, filepath, func):
+    '''
+    This function has two parts:
+    1. It processes the files according to the mask;
+    2. It delivers the files into the functions as per the input variables.
+
+     INPUTS: 
+    * cur the cursor variable
+    * conn the connection variable to the database
+    * filepath the path to the files to be processed
+    * func the function applied to the data
+'''
     # get all files matching extension from directory
     all_files = []
     for root, dirs, files in os.walk(filepath):

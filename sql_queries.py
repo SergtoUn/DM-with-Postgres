@@ -10,9 +10,9 @@ time_table_drop = "DROP TABLE IF EXISTS time"
 
 songplay_table_create = ("""
 CREATE TABLE IF NOT EXISTS songplays(
-songplay_id int PRIMARY KEY, 
-start_time timestamp REFERENCES time (start_time), 
-user_id int REFERENCES users (user_id), 
+songplay_id SERIAL PRIMARY KEY, 
+start_time timestamp NOT NULL REFERENCES time (start_time), 
+user_id int NOT NULL REFERENCES users (user_id), 
 level text, 
 song_id text REFERENCES songs (song_id), 
 artist_id text REFERENCES artists (artist_id), 
@@ -31,7 +31,7 @@ level text);
 
 song_table_create = ("""CREATE TABLE IF NOT EXISTS songs(
 song_id text PRIMARY KEY, 
-title text, 
+title text NOT NULL, 
 artist_id text, 
 year int, 
 duration float NOT NULL);
@@ -60,7 +60,6 @@ weekday text
 
 songplay_table_insert = ("""INSERT INTO songplays
 (
-songplay_id,
 start_time, 
 user_id, 
 level, 
@@ -70,7 +69,7 @@ session_id,
 location, 
 user_agent) 
 VALUES
-(%s, %s, %s, %s, %s, %s, %s, %s, %s)
+(%s, %s, %s, %s, %s, %s, %s, %s)
 ON CONFLICT DO NOTHING;
 """)
 
@@ -82,7 +81,7 @@ gender,
 level)
 VALUES
 (%s, %s, %s, %s, %s)
-ON CONFLICT DO NOTHING;
+ON CONFLICT(user_id) DO UPDATE SET level = excluded.level;
 """)
 
 song_table_insert = ("""INSERT INTO songs
@@ -123,7 +122,7 @@ ON CONFLICT (start_time) DO NOTHING;
 
 # FIND SONGS
 
-song_select = ("""SELECT song_id, artists.artist_id
+song_select = ("""SELECT songs.song_id, artists.artist_id
 FROM songs INNER JOIN artists ON songs.artist_id = artists.artist_id
 WHERE (songs.title = %s) AND (artists.name = %s) AND (duration = %s);
 """)
